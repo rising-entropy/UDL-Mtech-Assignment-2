@@ -165,8 +165,8 @@ A fresh run produces slightly different numbers (seed and cudnn nondeterminism).
    (rerun `nbconvert` afterwards). Do not change the training config to chase numbers; keep results honest. If a trend changes
    (e.g. FID ordering of the K values), say so in the analysis.
 2. The **Part C PDF is stale** after a re-run. It was built with `reportlab` from `results/*.json`, `results/samples/*.npy` and the
-   figures `results/figures/partC_*.png`, by a builder script that was kept only in a temporary folder and is **not in this repo**.
-   To refresh it you must rebuild it: 100-sample grids (10×10, upscaled) for VAE β=1, VQ-VAE K=256, WGAN, WGAN-GP and the real
+   figures `results/figures/partC_*.png`, by `tools/build_partC.py` (figures and grids by `tools/partC_figures.py`; run both from the repo root).
+   The scores table is read from the JSON files, but the prose quotes numbers by hand, so revise it after a re-run. The report contains: 100-sample grids (10×10, upscaled) for VAE β=1, VQ-VAE K=256, WGAN, WGAN-GP and the real
    test images; a bar chart of FID and precision/recall (`partC_fid_pr.png`); a speed chart (`partC_speed.png`); the group table;
    and sections: 1 setup/protocol, 2 evaluation scores, 3 100 samples + perceptual comments, 4 comparative discussion
    (reconstruction error, sampling quality, speed), 5 ablation highlights. Use the existing PDF as the template for wording and layout.
