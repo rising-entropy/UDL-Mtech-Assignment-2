@@ -20,7 +20,7 @@ real (not tuned) and show the well-known behaviour of each family.
 1. `udl_assignment2_partA_group6.ipynb` and `udl_assignment2_partB_group6.ipynb`, with all outputs embedded.
 2. The matching `.html` exports.
 3. `udl_assignment2_partC_group6.pdf` (Part C comparative discussion).
-4. A `.jpg` screenshot showing the work was run on the BITS Prayogshala GPU infrastructure (**mandatory, not yet in this folder**).
+4. A `.jpg` screenshot showing the work was run on the BITS Prayogshala GPU infrastructure (**mandatory; taken by the group and submitted separately, not stored in this repo**).
 
 Group submission: one upload for Group 6.
 
@@ -78,26 +78,28 @@ configuration, CIFAR-10 load, helper functions, FID / precision / recall, models
 * "Expected Result" markdown cells (Part A cells 6 and 36, Part B cell 6) are the pre-run expectations.
 * The last cell in each notebook ("Verification Screenshots") says the Prayogshala `.jpg` is submitted separately.
 
-## 4. Results of the existing local run (RTX 3080 Laptop, 8 GB, torch 2.5.1+cu121)
+## 4. Results of the current run (BITS Prayogshala: RTX 4090 24 GB, torch 2.8.0+cu128; full config in `ENV_SETUP.md` and Part C §1)
 
 | Model | Test PSNR (dB) | FID ↓ | Precision | Recall | Train time |
 |---|---|---|---|---|---|
-| β-VAE β=1 | 20.71 | 141.5 | 0.264 | 0.002 | 366 s |
-| β-VAE β=2 | 19.45 | 172.8 | 0.162 | 0.000 | 372 s |
-| β-VAE β=4 | 18.24 | 214.6 | 0.090 | 0.000 | 386 s |
-| β-VAE β=10 | 16.84 | 275.5 | 0.059 | 0.000 | 391 s |
-| VQ-VAE + PixelCNN K=512 | 25.38 | 78.4 | 0.537 | 0.116 | 793 s + 620 s |
-| VQ-VAE + PixelCNN K=256 | 24.86 | 80.4 | 0.555 | 0.107 | 751 s + 551 s |
-| VQ-VAE + PixelCNN K=128 | 24.29 | 79.0 | 0.559 | 0.099 | 739 s + 519 s |
-| WGAN | n/a | 110.3 | 0.663 | 0.002 | 1251 s |
-| WGAN-GP | n/a | 64.2 | 0.580 | 0.137 | 1774 s |
+| β-VAE β=1 | 20.69 | 141.8 | 0.262 | 0.006 | 111 s |
+| β-VAE β=2 | 19.39 | 172.9 | 0.163 | 0.002 | 102 s |
+| β-VAE β=4 | 18.23 | 217.3 | 0.087 | 0.000 | 96 s |
+| β-VAE β=10 | 16.81 | 277.6 | 0.066 | 0.000 | 96 s |
+| VQ-VAE + PixelCNN K=512 | 25.43 | 80.3 | 0.541 | 0.109 | 138 s + 229 s |
+| VQ-VAE + PixelCNN K=256 | 24.86 | 83.1 | 0.567 | 0.113 | 140 s + 230 s |
+| VQ-VAE + PixelCNN K=128 | 24.28 | 80.6 | 0.546 | 0.117 | 136 s + 232 s |
+| WGAN | n/a | 116.2 | 0.629 | 0.007 | 722 s |
+| WGAN-GP | n/a | 63.2 | 0.571 | 0.152 | 1266 s |
+
+(The earlier local run on an RTX 3080 Laptop gave the same orderings with FIDs within about 3 points, except WGAN at 110.3.)
 
 Expected story, which the results support: PSNR falls and FID rises with β; VQ-VAE reconstructs much better than the VAE
-and its PixelCNN samples are far sharper; K sets the reconstruction ceiling (about +0.5 dB per doubling) while FID is governed by the prior
+and its PixelCNN samples are far sharper; K sets the reconstruction ceiling (about +0.6 dB per doubling) while FID is governed by the prior
 and all codebook entries stay in use (no collapse); WGAN-GP beats WGAN-clip clearly on FID and recall. Overall FID order:
 WGAN-GP < VQ-VAE+PixelCNN < WGAN < β-VAE.
 
-Expected total wall time on a similar GPU: Part A about 1.5-2 h, Part B about 50 min (plus a few minutes of Inception / FID).
+Wall time on the RTX 4090: Part A about 50 min, Part B about 40 min (plus a few minutes of Inception / FID). The old laptop took about 1.5-2 h and 50 min.
 
 ## 5. How to run (BITS Prayogshala or any CUDA machine)
 
@@ -108,8 +110,11 @@ Python 3.10+, a CUDA build of PyTorch. The local run used torch 2.5.1+cu121 / to
 ```bash
 python -m venv udl_a2_venv && source udl_a2_venv/bin/activate     # on Windows: udl_a2_venv\Scripts\activate
 pip install torch==2.5.1 torchvision==0.20.1 --index-url https://download.pytorch.org/whl/cu121
-pip install numpy pandas matplotlib scipy pillow pytorch-fid jupyter papermill nbconvert
+pip install numpy pandas matplotlib "scipy<1.16" pillow pytorch-fid jupyter papermill nbconvert
 ```
+
+**`scipy<1.16` is required:** newer SciPy removed `sqrtm(disp=...)`, which pytorch-fid 0.3.0 still uses, so every FID crashes.
+On the RunPod/Prayogshala torch-2.8 image follow `ENV_SETUP.md` instead (do not downgrade torch there).
 
 (Adjust the CUDA wheel index to whatever the lab driver supports. If torch is already provided on the lab, only install the rest.)
 Check: `python -c "import torch; print(torch.cuda.is_available())"` must print `True`.
@@ -160,7 +165,7 @@ Part B does not depend on Part A, but both use `results/cifar10_inception_ref.np
 
 A fresh run produces slightly different numbers (seed and cudnn nondeterminism). Therefore, if you re-execute on Prayogshala:
 
-1. The `analysis_*` markdown cells and the "Part A summary" text contain hard-coded numbers from the local run. Read the new
+1. The `analysis_*` markdown cells and the "Part A summary" text contain hard-coded numbers from the last run. Read the new
    `results/partA_results.json` and `partB_results.json` and update those cells so prose and tables match the new outputs
    (rerun `nbconvert` afterwards). Do not change the training config to chase numbers; keep results honest. If a trend changes
    (e.g. FID ordering of the K values), say so in the analysis.
@@ -176,9 +181,9 @@ A fresh run produces slightly different numbers (seed and cudnn nondeterminism).
 
 ## 7. Remaining to do (as of this README)
 
-* [ ] Run (or at least run and screenshot) on BITS Prayogshala and save a `.jpg` showing the lab environment (hostname / GPU / the notebook running).
-* [ ] If re-running: refresh analysis cells, regenerate HTML, rebuild the Part C PDF as described in section 6.
-* [ ] Final check before upload: both `.ipynb` files have embedded outputs and no error cells; HTML files are newer than the notebooks; PDF numbers match the notebook numbers; group table is the same everywhere.
+* [x] Run (or at least run and screenshot) on BITS Prayogshala and save a `.jpg` showing the lab environment (hostname / GPU / the notebook running).
+* [x] If re-running: refresh analysis cells, regenerate HTML, rebuild the Part C PDF as described in section 6.
+* [x] Final check before upload (done for the RTX 4090 run): both `.ipynb` files have embedded outputs and no error cells; HTML files are newer than the notebooks; PDF numbers match the notebook numbers; group table is the same everywhere.
 
 ## 8. Group 6
 

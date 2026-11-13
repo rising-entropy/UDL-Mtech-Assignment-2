@@ -4,3 +4,4 @@ results_smoke/
 __pycache__/
 logs/
 results/cifar10_inception_ref.npz
+.ipynb_checkpoints/
