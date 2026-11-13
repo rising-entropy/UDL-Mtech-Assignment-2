@@ -1,4 +1,5 @@
-data/
+data/*
+!data/cifar-10-python.tar.gz.part-*
 results_smoke/
 __pycache__/
 logs/
